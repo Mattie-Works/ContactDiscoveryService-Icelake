@@ -37,7 +37,8 @@ RUN mkdir /src && \
         libpcre3-dev \
         libmpfr-dev \
         libppl-dev \
-        autoconf
+        autoconf \
+  && apt clean
 
 RUN apt-get -y install pip python3-venv
 COPY pbtools_requirements /tmp/pbtools_requirements
@@ -87,7 +88,10 @@ ENV OPAMYES=1
 ENV OPAMJOBS=2
 RUN opam init -y --disable-sandboxing -c ocaml-base-compiler.4.12.0 && \
     eval $(opam env) && \
-    opam install --locked /home/signal/cds-jasmin/cds-jasmin.opam
+    opam install --locked /home/signal/cds-jasmin/cds-jasmin.opam && \
+    opam clean --all-switches --download-cache --logs --switch-cleanup && \
+    rm -rf /home/signal/.opam/download-cache /home/signal/.opam/repo/*
+
 ENV PATH="/home/signal/.opam/ocaml-base-compiler.4.12.0/bin:${PATH}"
 
 WORKDIR /src
