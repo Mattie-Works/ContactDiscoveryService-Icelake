@@ -23,6 +23,7 @@ import com.azure.cosmos.CosmosAsyncContainer;
 import com.azure.cosmos.implementation.ConflictException;
 import com.azure.cosmos.implementation.NotFoundException;
 import com.azure.cosmos.models.CosmosBatch;
+import com.azure.cosmos.models.CosmosBatchResponse;
 import com.azure.cosmos.models.CosmosItemOperation;
 import com.azure.cosmos.models.CosmosItemOperationType;
 import com.azure.cosmos.models.CosmosItemResponse;
@@ -41,6 +42,8 @@ import org.mockito.ArgumentMatcher;
 import org.signal.cdsi.limits.RateLimitExceededException;
 import org.signal.cdsi.limits.TokenRateLimitConfiguration;
 import org.signal.cdsi.util.CompletionExceptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 public class CosmosTokenRateLimiterTest {
@@ -48,6 +51,10 @@ public class CosmosTokenRateLimiterTest {
   private static final String KEY = "user1";
   private static final String ETAG = "boop";
   private static final int BUCKET_SIZE = 10;
+  private static final Duration leakRateDuration = Duration.ofMinutes(1);
+  private static final int BUCKET_LEAK_RATE_SCALAR = 60;
+  private static final int EXPECTED_TTL = (int) leakRateDuration.toSeconds();  // ceil(bucket_size/scalar)*durationSecs
+  private static final Logger log = LoggerFactory.getLogger(CosmosTokenRateLimiterTest.class);
 
   private int token = 0;
   private CosmosAsyncContainer container;
@@ -61,8 +68,8 @@ public class CosmosTokenRateLimiterTest {
     when(clock.instant()).thenReturn(Instant.ofEpochSecond(0));
     TokenRateLimitConfiguration conf = new TokenRateLimitConfiguration();
     conf.setBucketSize(BUCKET_SIZE);
-    conf.setLeakRateDuration(Duration.ofSeconds(1));
-    conf.setLeakRateScalar(1);
+    conf.setLeakRateDuration(leakRateDuration);
+    conf.setLeakRateScalar(BUCKET_LEAK_RATE_SCALAR);
     this.cosmosTokenRateLimiter = new CosmosTokenRateLimiter(container, clock, conf, new SimpleMeterRegistry(), false);
   }
 
@@ -88,7 +95,8 @@ public class CosmosTokenRateLimiterTest {
 
     Mono<CosmosItemResponse<TokenCost>> createTokenResponse = mockResponse(null);
     // should store a token with a cost of 5 + 4
-    when(container.createItem(eq(tokenCost(newToken, 9)), any(), any()))
+    TokenCost cost = tokenCost(newToken, 9);
+    when(container.createItem(eq(cost), any(), any()))
         .thenReturn(createTokenResponse);
 
     cosmosTokenRateLimiter.prepare(KEY, 4, oldToken, newToken).join();
@@ -153,8 +161,10 @@ public class CosmosTokenRateLimiterTest {
 
     mockRead(TokenBucket.ID, TokenBucket.class, mockResponse(tokenBucket(6), ETAG));
 
+    CosmosBatchResponse resp = mock(CosmosBatchResponse.class);
+    when(resp.isSuccessStatusCode()).thenReturn(true);
     when(container.executeCosmosBatch(any(), any()))
-        .thenReturn(Mono.empty());
+        .thenReturn(Mono.just(resp));
     int spent = cosmosTokenRateLimiter.validate(KEY, token).join();
     assertEquals(spent, 4);
 
@@ -172,8 +182,10 @@ public class CosmosTokenRateLimiterTest {
 
     mockRead(TokenBucket.ID, TokenBucket.class, mockResponse(tokenBucket(6), ETAG));
 
+    CosmosBatchResponse resp = mock(CosmosBatchResponse.class);
+    when(resp.isSuccessStatusCode()).thenReturn(true);
     when(container.executeCosmosBatch(any(), any()))
-        .thenReturn(Mono.empty());
+        .thenReturn(Mono.just(resp));
     int spent = cosmosTokenRateLimiter.validate(KEY, token).join();
     assertEquals(spent, 0);
 
@@ -235,8 +247,10 @@ public class CosmosTokenRateLimiterTest {
     when(clock.instant()).thenReturn(Instant.ofEpochSecond(1));
 
     // now should work
+    CosmosBatchResponse resp = mock(CosmosBatchResponse.class);
+    when(resp.isSuccessStatusCode()).thenReturn(true);
     when(container.executeCosmosBatch(any(), any()))
-        .thenReturn(Mono.empty());
+        .thenReturn(Mono.just(resp));
     int spent = cosmosTokenRateLimiter.validate(KEY, token).join();
     assertEquals(spent, 5);
 
@@ -253,8 +267,11 @@ public class CosmosTokenRateLimiterTest {
 
     mockRead(TokenBucket.ID, TokenBucket.class, mockResponse(tokenBucket(6), ETAG));
 
+    CosmosBatchResponse response = mock(CosmosBatchResponse.class);
+    when(response.isSuccessStatusCode()).thenReturn(false);
+
     when(container.executeCosmosBatch(any(), any()))
-        .thenReturn(Mono.error(new ConflictException(null, null, null)));
+        .thenReturn(Mono.just(response));
 
     final CompletionException completionException =
         assertThrows(CompletionException.class, () -> cosmosTokenRateLimiter.validate(KEY, token).join());
@@ -317,11 +334,11 @@ public class CosmosTokenRateLimiterTest {
 
 
   private TokenBucket tokenBucket(double amount) {
-    return TokenBucket.create(KEY, amount, clock.instant().toString(), BUCKET_SIZE);
+    return TokenBucket.create(KEY, amount, clock.instant().toString(), EXPECTED_TTL);
   }
 
   private TokenCost tokenCost(ByteBuffer token, long cost) {
-    return TokenCost.create(KEY, base64Encode(token), cost, clock.instant().toString(), BUCKET_SIZE);
+    return TokenCost.create(KEY, base64Encode(token), cost, clock.instant().toString(), EXPECTED_TTL);
   }
 
   private ByteBuffer token() {

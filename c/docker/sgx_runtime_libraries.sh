@@ -8,14 +8,13 @@ apt-get install -y \
       wget \
       software-properties-common \
       debian-archive-keyring \
-      ##
+## apt-get install
 
-# Install Microsoft production repo.
 wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb
 dpkg -i packages-microsoft-prod.deb
 
 echo "deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu jammy main" | tee /etc/apt/sources.list.d/sgx.list
-wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add -
+wget -nv -O - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | tee /etc/apt/trusted.gpg.d/intel-sgx-deb.asc
 
 apt-get update
 apt-get -y install \
@@ -39,3 +38,5 @@ apt-get -y install \
     libsgx-urts=2.29.100.1-jammy1 \
     sgx-aesm-service=2.29.100.1-jammy1 \
 ## apt-get install
+
+apt-get clean

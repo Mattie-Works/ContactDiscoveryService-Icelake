@@ -244,7 +244,9 @@ public class CosmosTokenRateLimiter implements TokenRateLimiter {
         .onErrorMap(CosmosException.class, CosmosTokenRateLimiter::marshal)
         .doOnError(e -> !(CompletionExceptions.unwrap(e) instanceof RateLimitExceededException), e ->
             logger.warn("Failed to persist token cost for {}", KeyToken.of(key, newTokenId), e))
-        .doFinally(ignore -> sample.stop(prepareTimer))
+        .doFinally(
+            ignore -> sample.stop(prepareTimer)
+        )
         .toFuture().thenApply(ignored -> null);
   }
 
@@ -270,7 +272,7 @@ public class CosmosTokenRateLimiter implements TokenRateLimiter {
         .map(Instant::parse)
         .orElse(Instant.EPOCH);
     Instant oldGcts = Optional.ofNullable(bucket.getGcts()).map(Instant::parse).orElse(lastUpdated);
-    long advanceSecs = (delta + configuration.getLeakRateScalar() - 1) / configuration.getLeakRateScalar();
+    long advanceSecs = 1 + configuration.getLeakRateDuration().toSeconds() * delta / configuration.getLeakRateScalar();
     bucket.setGcts(oldGcts.plusSeconds(advanceSecs).toString());
   }
 
@@ -420,7 +422,7 @@ public class CosmosTokenRateLimiter implements TokenRateLimiter {
         // if the token doesn't have a cost, it's free! can immediately succeed (will short circuit the rest)
         .onErrorResume(NotFoundException.class, e -> {
           logger.debug("{} did not have a stored value, will not charge", KeyToken.of(key, tokenId));
-          return Mono.empty();
+          return Mono.empty();  // We return a null CosmosBatchResponse here, to signal success later on.
         })
 
         // build the update for the rate limit bucket
@@ -438,7 +440,14 @@ public class CosmosTokenRateLimiter implements TokenRateLimiter {
           batch.deleteItemOperation(tokenId);
           return this.container.executeCosmosBatch(batch, new CosmosBatchRequestOptions());
         })
-
+        .flatMap(resp -> {
+          // We get a null resp here if we got a NotFound when reading initially, which is a success.
+          if (resp == null || resp.isSuccessStatusCode()) {
+            return Mono.empty();
+          }
+          return Mono.error(new CompletionException(new IOException(
+              "failed to update ratelimit for %s:%s".formatted(KeyToken.of(key, tokenId), resp.getErrorMessage()))));
+        })
         .doOnError(ex -> {
           ex = CompletionExceptions.unwrap(ex);
           if (ex instanceof RateLimitExceededException) {
@@ -455,7 +464,6 @@ public class CosmosTokenRateLimiter implements TokenRateLimiter {
           }
         })
         .onErrorMap(CosmosException.class, CosmosTokenRateLimiter::marshal)
-        .doOnSuccess(ignore -> meterRegistry.counter(VALIDATE_COUNTER_NAME, "outcome", "success").increment())
         .doFinally(ignored -> sample.stop(validateTimer))
         .toFuture()
         .thenApply(ignored -> spent[0]);
