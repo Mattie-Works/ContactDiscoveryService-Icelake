@@ -1,4 +1,4 @@
-FROM eclipse-temurin:25-jre-jammy@sha256:b8ba5fca9d88b6ecc3a46c8e75b744f84aca9a9d08587901b5ab480baf641ab5
+FROM eclipse-temurin:25-jre-jammy@sha256:25777acfabf927084b7ef46d8bc786b6203c8c344f56541054238b8c4fe73db9
 
 COPY classes/sgx_runtime_libraries.sh /tmp/sgx_runtime_libraries.sh
 RUN /tmp/sgx_runtime_libraries.sh
