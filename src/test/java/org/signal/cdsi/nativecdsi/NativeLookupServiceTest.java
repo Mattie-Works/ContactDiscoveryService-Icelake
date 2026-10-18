@@ -4,7 +4,6 @@ package org.signal.cdsi.nativecdsi;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +17,7 @@ import org.signal.cdsi.limits.TokenRateLimiter;
 class NativeLookupServiceTest {
   private static final long E164 = 123456789L;
 
-  private static final class TrackingLimiter implements TokenRateLimiter {
+  private static class TrackingLimiter implements TokenRateLimiter {
     private final Map<String, Integer> outstanding = new ConcurrentHashMap<>();
     int validations;
 
