@@ -5,6 +5,7 @@
 
 package org.signal.cdsi.enclave;
 
+import io.micronaut.context.annotation.Requires;
 import static org.signal.cdsi.metrics.MetricsUtil.name;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -54,6 +55,7 @@ import org.signal.libsignal.cds2.Cds2Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Requires(property = "cdsi.backend", value = "sgx", defaultValue = "sgx")
 @Context
 public class Enclave implements DirectoryEngine, AutoCloseable {
 
