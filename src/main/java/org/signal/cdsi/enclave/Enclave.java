@@ -55,7 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Context
-public class Enclave implements AutoCloseable {
+public class Enclave implements DirectoryEngine, AutoCloseable {
 
   private final long id;
 
