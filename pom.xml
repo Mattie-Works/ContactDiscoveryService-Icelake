@@ -532,5 +532,24 @@
         </plugins>
       </build>
     </profile>
+    <!-- Native Linux build: no Open Enclave compiler or SGX test enclave required. -->
+    <profile>
+      <id>native-linux</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <!-- Override the unconditional base execution while preserving SGX builds by default. -->
+              <execution>
+                <id>build-test-enclave</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 </project>
