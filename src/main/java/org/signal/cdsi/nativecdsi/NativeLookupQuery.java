@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-only */
 package org.signal.cdsi.nativecdsi;
 
-import java.util.Arrays;
 
 /** One requested E.164 with optional 16-byte unidentified access key. */
 public record NativeLookupQuery(long e164, byte[] uak) {
