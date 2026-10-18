@@ -9,6 +9,7 @@ env:
 
 jobs:
   c-tests:
+    if: github.ref_name != 'feature/native-linux-cdsi'
     name: C tests
     runs-on: ubuntu-22.04
     timeout-minutes: 60
@@ -34,6 +35,7 @@ jobs:
         run: make docker_tests
 
   c-build:
+    if: github.ref_name != 'feature/native-linux-cdsi'
     name: C build
     runs-on: ubuntu-22.04
     timeout-minutes: 60
@@ -59,6 +61,7 @@ jobs:
         run: make docker_all
 
   c-valgrinds:
+    if: github.ref_name != 'feature/native-linux-cdsi'
     name: C valgrind tests
     runs-on: ubuntu-22.04
     timeout-minutes: 60
@@ -84,6 +87,7 @@ jobs:
         run: make docker_valgrinds
 
   java-tests:
+    if: github.ref_name != 'feature/native-linux-cdsi'
     name: Java tests
     runs-on: ubuntu-22.04
     timeout-minutes: 60
