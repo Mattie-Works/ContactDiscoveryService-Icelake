@@ -8,6 +8,53 @@ The top-level directory contains a Java (Micronaut) service which will act as
 the host-side server for CDSI.  The `c/` subdirectory contains SGX-side C
 code.
 
+
+Native Linux (non-attested custom clients)
+-----------------------------------------
+
+An experimental native backend is under development on the
+`feature/native-linux-cdsi` branch. It does **not** use Intel SGX or Open Enclave
+at runtime, and is not wire compatible with the attested Signal CDSI protocol.
+Native mode trusts the Linux server operator with directory data and queries.
+
+To run native development mode (requires Java 25, Maven, and the existing
+authentication credentials configuration):
+
+```shell
+./mvnw -Pnative-linux -DskipTests package
+MICRONAUT_ENVIRONMENTS=dev,native java -cp 'target/classes:target/runtime-libs/*' org.signal.cdsi.Application
+```
+
+The `java -cp` command requires a prior Maven dependency copy step. A
+self-contained alternative is to build the native Docker image:
+
+```shell
+docker build -f Dockerfile.native -t cdsi-native:dev .
+docker run --rm -p 8080:8080 -e MICRONAUT_ENVIRONMENTS=dev,native cdsi-native:dev
+```
+
+The development environment supplies test credentials and a non-persistent
+rate limiter and is **not suitable for production**. To load random development
+accounts, set `RANDOM_ACCOUNT_POPULATOR_ACCOUNTS`. To run native mode outside
+development, configure the existing authentication, account-table/Kinesis,
+Cosmos token limiter, and Redis connection limiter as before, and activate the
+`native` Micronaut environment.
+
+The native custom WebSocket endpoint is `/v2/native/discovery`; it requires an
+authenticated connection, explicit acceptance of `attested:false`, and WSS/TLS
+termination by a trusted proxy. The request and response wire format is defined
+in [docs/native-custom-client-protocol.md](docs/native-custom-client-protocol.md).
+Native unit tests can be selected with:
+
+```shell
+./mvnw -Pnative-linux -Dtest='Native*Test' test
+```
+
+**Migration status:** native Java directory and WebSocket code is committed;
+SGX source/build support remains in the repository for compatibility with
+the legacy backend. Native-mode compilation, integration tests, and security
+validation have not yet been verified.
+
 Building
 --------
 
