@@ -28,14 +28,14 @@ import org.slf4j.LoggerFactory;
  *
  * NOTE: Production deployment must enforce WSS at its trusted reverse proxy,
  * prevent plaintext access to the backend, and apply the existing connection
- * limiter. Enabling this endpoint does NOT yet populate the native directory
- * or disable the SGX application context.
+ * limiter. Directory contents are supplied by the configured AccountPopulator;
+ * the native backend disables the SGX application context.
  */
 @Requires(property = "cdsi.backend", value = "native")
 @Secured(SecurityRule.IS_AUTHENTICATED)
 @ServerWebSocket("/v2/native/discovery")
 @RequestScope
-public final class NativeDiscoveryWebSocket {
+public class NativeDiscoveryWebSocket {
   private enum Phase { AWAIT_ACCEPT, PREPARING, AWAIT_QUERY, DONE }
 
   private static final Logger log = LoggerFactory.getLogger(NativeDiscoveryWebSocket.class);
