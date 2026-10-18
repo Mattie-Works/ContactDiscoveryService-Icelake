@@ -17,13 +17,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.signal.cdsi.enclave.DirectoryEntry;
-import org.signal.cdsi.enclave.Enclave;
+import org.signal.cdsi.enclave.DirectoryEngine;
 import org.signal.cdsi.util.UUIDUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An {@link AccountPopulator} implementation that generates random accounts and adds them to an enclave. This is
+ * An {@link AccountPopulator} implementation that generates random accounts and adds them to a directory. This is
  * intended solely for testing purposes.
  */
 @Singleton
@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 @Requires(env = "dev")
 public class RandomAccountPopulator implements AccountPopulator {
 
-  private final Enclave enclave;
+  private final DirectoryEngine directoryEngine;
   private final int accounts;
   private final ExecutorService executorService;
 
@@ -41,10 +41,10 @@ public class RandomAccountPopulator implements AccountPopulator {
 
   private static final Logger logger = LoggerFactory.getLogger(RandomAccountPopulator.class);
 
-  public RandomAccountPopulator(final Enclave enclave,
+  public RandomAccountPopulator(final DirectoryEngine directoryEngine,
       @Value("${random-account-populator.accounts:0}") final int accounts,
       @Named(TaskExecutors.IO) ExecutorService executorService) {
-    this.enclave = enclave;
+    this.directoryEngine = directoryEngine;
     this.accounts = accounts;
     this.executorService = executorService;
   }
@@ -64,16 +64,16 @@ public class RandomAccountPopulator implements AccountPopulator {
             UUIDUtil.toByteArray(UUID.randomUUID())));
 
         if (entries.size() % BATCH_SIZE == 0) {
-          enclave.loadData(entries, false).join();
+          directoryEngine.loadData(entries, false).join();
           entries.clear();
         }
       }
 
       if (!entries.isEmpty()) {
-        enclave.loadData(entries, false).join();
+        directoryEngine.loadData(entries, false).join();
       }
 
-      logger.info("Populated enclave with {} random accounts in {} milliseconds.", accounts, System.currentTimeMillis() - start);
+      logger.info("Populated directory with {} random accounts in {} milliseconds.", accounts, System.currentTimeMillis() - start);
       accountsPopulated.set(true);
     }, executorService);
   }
