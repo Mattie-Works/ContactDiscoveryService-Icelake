@@ -5,6 +5,7 @@
 
 package org.signal.cdsi.enclave;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Context;
 
@@ -14,6 +15,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import org.signal.cdsi.util.ByteSize;
 
+@Requires(property = "cdsi.backend", value = "sgx", defaultValue = "sgx")
 @Context
 @ConfigurationProperties("enclave")
 public class EnclaveConfiguration {
