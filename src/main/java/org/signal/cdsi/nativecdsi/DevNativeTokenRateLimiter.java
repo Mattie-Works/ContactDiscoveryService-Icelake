@@ -5,7 +5,6 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Primary;
 import jakarta.inject.Singleton;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
