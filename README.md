@@ -21,12 +21,11 @@ To run native development mode (requires Java 25, Maven, and the existing
 authentication credentials configuration):
 
 ```shell
-./mvnw -Pnative-linux -DskipTests package
+./mvnw -Pnative-linux -DskipTests package dependency:copy-dependencies -DincludeScope=runtime -DoutputDirectory=target/runtime-libs
 MICRONAUT_ENVIRONMENTS=dev,native java -cp 'target/classes:target/runtime-libs/*' org.signal.cdsi.Application
 ```
 
-The `java -cp` command requires a prior Maven dependency copy step. A
-self-contained alternative is to build the native Docker image:
+Alternatively, build the native Docker image:
 
 ```shell
 docker build -f Dockerfile.native -t cdsi-native:dev .
