@@ -5,6 +5,7 @@
 
 package org.signal.cdsi.limits;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -19,6 +20,7 @@ import org.signal.cdsi.enclave.Enclave;
 /**
  * Rejects new requests when the enclave is overloaded.
  */
+@Requires(property = "cdsi.backend", value = "sgx", defaultValue = "sgx")
 @Filter("/v1/*/discovery")
 public class LoadSheddingFilter implements HttpServerFilter {
 
