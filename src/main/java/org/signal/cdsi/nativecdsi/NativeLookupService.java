@@ -74,7 +74,7 @@ public final class NativeLookupService {
     try {
       prepared = limiter.prepare(authenticatedUser, count,
           ByteBuffer.wrap(new byte[TOKEN_BYTES]), ByteBuffer.wrap(tokenHash.clone()));
-    } catch (Throwable t) {
+    } catch (RuntimeException | Error t) {
       pendingCapacity.release();
       throw t;
     }
