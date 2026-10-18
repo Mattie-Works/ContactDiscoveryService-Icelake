@@ -3,6 +3,8 @@ package org.signal.cdsi.nativecdsi;
 
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -37,7 +39,7 @@ public final class NativeLookupService {
     byte[] token = new byte[TOKEN_BYTES];
     random.nextBytes(token);
     return limiter.prepare(authenticatedUser, count, ByteBuffer.wrap(new byte[TOKEN_BYTES]),
-        ByteBuffer.wrap(token.clone())).thenApply(ignored -> token.clone());
+        ByteBuffer.wrap(sha256(token))).thenApply(ignored -> token.clone());
   }
 
   /**
@@ -51,7 +53,7 @@ public final class NativeLookupService {
     if (numbers.isEmpty() || numbers.size() > maxNumbers || numbers.contains(null))
       throw new IllegalArgumentException("invalid query size");
     if (token == null || token.length != TOKEN_BYTES) throw new IllegalArgumentException("invalid token");
-    return limiter.validate(authenticatedUser, ByteBuffer.wrap(token.clone()))
+    return limiter.validate(authenticatedUser, ByteBuffer.wrap(sha256(token)))
         .thenApply(permitsUsed -> {
           // Fail closed if the limiter returns an unexpected result.
           if (permitsUsed == null || permitsUsed < numbers.size())
@@ -60,6 +62,14 @@ public final class NativeLookupService {
           for (long number : numbers) result.add(directory.find(number).orElse(null));
           return result;
         });
+  }
+
+  private static byte[] sha256(byte[] token) {
+    try {
+      return MessageDigest.getInstance("SHA-256").digest(token);
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("SHA-256 unavailable", e);
+    }
   }
 
   private static void requireUser(String user) {
