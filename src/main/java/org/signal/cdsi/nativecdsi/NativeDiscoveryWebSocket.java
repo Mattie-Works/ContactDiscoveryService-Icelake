@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import org.signal.cdsi.account.AccountPopulator;
 import org.signal.cdsi.limits.RateLimitExceededException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,14 +44,16 @@ public class NativeDiscoveryWebSocket {
   private static final int MAX_MESSAGE_BYTES = 1 << 20;
 
   private final NativeLookupService lookupService;
+  private final AccountPopulator accountPopulator;
   private CompletableFuture<Void> chain = CompletableFuture.completedFuture(null);
   private Phase phase = Phase.AWAIT_ACCEPT;
   private String user;
   private int expectedCount;
   private volatile boolean closed;
 
-  public NativeDiscoveryWebSocket(NativeLookupService lookupService) {
+  public NativeDiscoveryWebSocket(NativeLookupService lookupService, AccountPopulator accountPopulator) {
     this.lookupService = lookupService;
+    this.accountPopulator = accountPopulator;
   }
 
   @OnOpen
@@ -88,6 +91,8 @@ public class NativeDiscoveryWebSocket {
   }
 
   private CompletableFuture<Void> accept(WebSocketSession session, JsonNode request) {
+    if (!accountPopulator.hasFinishedInitialAccountPopulation() || !accountPopulator.isHealthy())
+      throw new IllegalStateException("directory not ready");
     if (!"accept".equals(string(request, "type"))
         || !NativeProtocol.VERSION.equals(string(request, "protocol")))
       throw new IllegalArgumentException("explicit native protocol acceptance required");
