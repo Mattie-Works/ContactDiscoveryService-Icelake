@@ -32,7 +32,7 @@ class NativeDirectoryEngineTest {
     DevNativeTokenRateLimiter limiter = new DevNativeTokenRateLimiter();
     java.nio.ByteBuffer hash = java.nio.ByteBuffer.wrap(new byte[32]);
     limiter.prepare("user", 2, java.nio.ByteBuffer.wrap(new byte[32]), hash).join();
-    assertEquals(2, limiter.validate("user", hash).join());
+    assertEquals(2, limiter.validate("user", hash).join().intValue());
     assertThrows(CompletionException.class, () -> limiter.validate("user", hash).join());
   }
 }
