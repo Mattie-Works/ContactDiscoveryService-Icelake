@@ -15,7 +15,6 @@ import io.micronaut.websocket.annotation.OnClose;
 import io.micronaut.websocket.annotation.OnMessage;
 import io.micronaut.websocket.annotation.OnOpen;
 import io.micronaut.websocket.annotation.ServerWebSocket;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
@@ -32,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * limiter. Enabling this endpoint does NOT yet populate the native directory
  * or disable the SGX application context.
  */
-@Requires(property = "cdsi.native.enabled", value = "true")
+@Requires(property = "cdsi.backend", value = "native")
 @Secured(SecurityRule.IS_AUTHENTICATED)
 @ServerWebSocket("/v2/native/discovery")
 @RequestScope
@@ -48,7 +47,7 @@ public final class NativeDiscoveryWebSocket {
   private Phase phase = Phase.AWAIT_ACCEPT;
   private String user;
   private int expectedCount;
-  private boolean closed;
+  private volatile boolean closed;
 
   public NativeDiscoveryWebSocket(NativeLookupService lookupService) {
     this.lookupService = lookupService;
