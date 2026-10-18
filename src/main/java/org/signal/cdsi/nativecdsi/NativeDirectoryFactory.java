@@ -15,7 +15,7 @@ import org.signal.cdsi.limits.TokenRateLimiter;
  * disable the existing SGX backend.
  */
 @Factory
-@Requires(property = "cdsi.native.enabled", value = "true")
+@Requires(property = "cdsi.backend", value = "native")
 public class NativeDirectoryFactory {
   @Singleton
   NativeDirectoryIndex index() {
