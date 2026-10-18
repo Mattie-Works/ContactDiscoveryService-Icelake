@@ -5,6 +5,7 @@
 
 package org.signal.cdsi.health;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.health.HealthStatus;
 import io.micronaut.management.health.indicator.HealthIndicator;
@@ -16,6 +17,7 @@ import org.signal.cdsi.enclave.Enclave;
 import org.signal.cdsi.enclave.EnclaveConfiguration;
 import reactor.core.publisher.Mono;
 
+@Requires(property = "cdsi.backend", value = "sgx", defaultValue = "sgx")
 @Singleton
 @Liveness
 public class EnclaveShardThreadLivenessIndicator implements HealthIndicator {
