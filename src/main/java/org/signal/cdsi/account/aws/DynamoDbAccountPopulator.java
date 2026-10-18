@@ -27,7 +27,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import org.signal.cdsi.account.AccountPopulator;
 import org.signal.cdsi.enclave.DirectoryEntry;
-import org.signal.cdsi.enclave.Enclave;
+import org.signal.cdsi.enclave.DirectoryEngine;
 import org.signal.cdsi.util.UUIDUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +48,7 @@ import software.amazon.awssdk.services.kinesis.model.SubscribeToShardResponse;
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardResponseHandler;
 
 /**
- * The DynamoDB account populator populates an {@link Enclave} with account data from a DynamoDB table and a Kinesis
+ * The DynamoDB account populator populates a {@link DirectoryEngine} with account data from a DynamoDB table and a Kinesis
  * stream that contains filtered updates from the table.
  *
  * @see <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan">Amazon
@@ -61,7 +61,7 @@ import software.amazon.awssdk.services.kinesis.model.SubscribeToShardResponseHan
 @Singleton
 class DynamoDbAccountPopulator implements AccountPopulator, SubscribeToShardResponseHandler {
 
-  private final Enclave enclave;
+  private final DirectoryEngine directoryEngine;
   private final DynamoDbAsyncClient dynamoDbAsyncClient;
   private final KinesisAsyncClient kinesisAsyncClient;
   private final KinesisStreamConsumerSupplier streamConsumerSource;
@@ -114,7 +114,7 @@ class DynamoDbAccountPopulator implements AccountPopulator, SubscribeToShardResp
 
   private static final Logger logger = LoggerFactory.getLogger(DynamoDbAccountPopulator.class);
 
-  public DynamoDbAccountPopulator(final Enclave enclave,
+  public DynamoDbAccountPopulator(final DirectoryEngine directoryEngine,
       final DynamoDbAsyncClient dynamoDbAsyncClient,
       final KinesisAsyncClient kinesisAsyncClient,
       final KinesisStreamConsumerSupplier streamConsumerSource,
@@ -122,7 +122,7 @@ class DynamoDbAccountPopulator implements AccountPopulator, SubscribeToShardResp
       final Clock clock,
       final AccountTableConfiguration accountTableConfiguration) {
 
-    this.enclave = enclave;
+    this.directoryEngine = directoryEngine;
     this.dynamoDbAsyncClient = dynamoDbAsyncClient;
     this.kinesisAsyncClient = kinesisAsyncClient;
     this.streamConsumerSource = streamConsumerSource;
@@ -172,7 +172,7 @@ class DynamoDbAccountPopulator implements AccountPopulator, SubscribeToShardResp
           healthy = false;
         })
         .subscribe(entries -> {
-          enclave.loadData(entries, false).join();
+          directoryEngine.loadData(entries, false).join();
           entriesFromTableCounter.increment(entries.size());
         });
   }
@@ -371,7 +371,7 @@ class DynamoDbAccountPopulator implements AccountPopulator, SubscribeToShardResp
       }
 
       if (!directoryEntries.isEmpty()) {
-        enclave.loadData(directoryEntries, false).join();
+        directoryEngine.loadData(directoryEntries, false).join();
         entriesFromStreamCounter.increment(directoryEntries.size());
       }
     }
