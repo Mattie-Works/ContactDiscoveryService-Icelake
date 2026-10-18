@@ -25,8 +25,8 @@ public final class NativeDirectoryIndex {
     }
     // Validate before taking the write lock to avoid partial application.
     for (DirectoryEntry entry : updates) {
-      if (entry == null || (!entry.isDeletion() &&
-          (entry.aci() == null || entry.aci().length != 16 || entry.pni() == null || entry.pni().length != 16 ||
+      if (entry == null || entry.e164() <= 0 || entry.aci() == null || (!entry.isDeletion() &&
+          (entry.aci().length != 16 || entry.pni() == null || entry.pni().length != 16 ||
               (entry.uak() != null && entry.uak().length != 0 && entry.uak().length != 16)))) {
         throw new IllegalArgumentException("invalid directory entry");
       }
