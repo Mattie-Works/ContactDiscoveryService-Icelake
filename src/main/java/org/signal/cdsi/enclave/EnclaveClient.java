@@ -13,7 +13,7 @@ import org.signal.cdsi.limits.TokenRateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EnclaveClient {
+public class EnclaveClient implements DirectorySession {
   public enum State {
     UNINITIALIZED,
     ATTESTED,
