@@ -5,6 +5,7 @@
 
 package org.signal.cdsi;
 
+import io.micronaut.context.annotation.Requires;
 import static org.signal.cdsi.metrics.MetricsUtil.name;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -46,6 +47,7 @@ import org.signal.cdsi.util.UserAgentUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Requires(property = "cdsi.backend", value = "sgx", defaultValue = "sgx")
 @Secured(SecurityRule.IS_AUTHENTICATED)
 @ServerWebSocket("/v1/{enclaveId}/discovery")
 @RequestScope
