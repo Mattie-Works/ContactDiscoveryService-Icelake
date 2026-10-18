@@ -1,0 +1,5 @@
+# Native Linux CDSI. Explicitly non-attested; use only with custom clients.
+cdsi:
+  backend: native
+  native:
+    max-numbers: 1024
