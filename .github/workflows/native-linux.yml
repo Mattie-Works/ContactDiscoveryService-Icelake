@@ -54,3 +54,32 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build standalone image without Intel SGX runtime packages
         run: docker build -f Dockerfile.native -t cdsi-native:ci .
+
+  native-compose-smoke:
+    name: Self-hosted Compose smoke test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CDSI_POSTGRES_PASSWORD: ci-only-postgres-not-for-production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start PostgreSQL, Redis and native CDSI
+        run: docker compose -f compose.native.dev.yml up -d --build
+      - name: Verify native application health and initial account load
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8081/health >/dev/null; then
+              echo "CDSI health endpoint is responding"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "CDSI did not become healthy"
+          docker compose -f compose.native.dev.yml logs --tail=250
+          exit 1
+      - name: Show Compose logs on failure
+        if: failure()
+        run: docker compose -f compose.native.dev.yml logs --tail=300
+      - name: Remove test stack
+        if: always()
+        run: docker compose -f compose.native.dev.yml down -v
