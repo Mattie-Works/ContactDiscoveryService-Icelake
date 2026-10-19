@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 @Singleton
 @Requires(missingBeans = AccountPopulator.class)
 @Requires(env = "dev")
+@Requires(property = "cdsi.account-populator", value = "random")
 public class RandomAccountPopulator implements AccountPopulator {
 
   private final DirectoryEngine directoryEngine;
