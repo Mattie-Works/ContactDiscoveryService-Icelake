@@ -20,6 +20,7 @@ import org.signal.cdsi.limits.TokenRateLimiter;
 @Primary
 @Requires(env = "dev")
 @Requires(property = "cdsi.backend", value = "native")
+@Requires(property = "cdsi.token-limiter.backend", value = "dev")
 public final class DevNativeTokenRateLimiter implements TokenRateLimiter {
   private final Map<String, Integer> tokens = new ConcurrentHashMap<>();
 
