@@ -103,7 +103,7 @@ public final class NativeLookupService {
       String authenticatedUser, byte[] token, List<NativeLookupQuery> queries) {
     requireUser(authenticatedUser);
     Objects.requireNonNull(queries);
-    if (queries.isEmpty() || queries.size() > maxNumbers || queries.contains(null))
+    if (queries.isEmpty() || queries.size() > maxNumbers || queries.stream().anyMatch(Objects::isNull))
       throw new IllegalArgumentException("invalid query size");
     if (token == null || token.length != TOKEN_BYTES)
       throw new IllegalArgumentException("invalid token");
