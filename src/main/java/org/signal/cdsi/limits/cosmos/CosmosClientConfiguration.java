@@ -6,9 +6,11 @@
 package org.signal.cdsi.limits.cosmos;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Context;
 import jakarta.validation.constraints.NotBlank;
 
+@Requires(property = "cdsi.token-limiter.backend", value = "cosmos", defaultValue = "cosmos")
 @ConfigurationProperties("cosmos")
 @Context
 public class CosmosClientConfiguration {
