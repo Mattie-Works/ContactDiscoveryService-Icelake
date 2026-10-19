@@ -58,6 +58,7 @@ import software.amazon.awssdk.services.kinesis.model.SubscribeToShardResponseHan
  * @see <a href="https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/examples-kinesis-stream.html">AWS SDK
  * for Java Developer Guide - Subscribing to Amazon Kinesis Data Streams</a>
  */
+@io.micronaut.context.annotation.Requires(property = "cdsi.account-populator", value = "dynamodb", defaultValue = "dynamodb")
 @Singleton
 class DynamoDbAccountPopulator implements AccountPopulator, SubscribeToShardResponseHandler {
 
