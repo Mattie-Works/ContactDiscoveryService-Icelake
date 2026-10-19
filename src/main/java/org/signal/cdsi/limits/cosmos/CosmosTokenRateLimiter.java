@@ -33,6 +33,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.Timer.Sample;
 import io.micronaut.core.annotation.Creator;
+import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -68,6 +69,7 @@ import reactor.core.publisher.Mono;
  *
  * @see org.signal.cdsi.limits.TokenRateLimiter
  */
+@Requires(property = "cdsi.token-limiter.backend", value = "cosmos", defaultValue = "cosmos")
 @Singleton
 public class CosmosTokenRateLimiter implements TokenRateLimiter {
 
