@@ -1,3 +1,14 @@
+> **Self-hosted local stack:** For a working PostgreSQL + Redis setup, use
+> [the dedicated rate-limiter and Compose guide](self-hosted-rate-limiters.md).
+> A plain `docker run` without database configuration is not sufficient when
+> native mode selects PostgreSQL token quotas.
+>
+> ```sh
+> umask 077
+> printf 'CDSI_POSTGRES_PASSWORD=%s\\n' "$(openssl rand -hex 32)" > .env
+> docker compose -f compose.native.dev.yml up -d --build
+> ```
+>
 # Native Linux CDSI: build, Docker image, and local deployment
 
 This guide applies to the **`feature/native-linux-cdsi`** branch of
