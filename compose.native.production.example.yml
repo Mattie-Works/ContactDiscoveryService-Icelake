@@ -1,0 +1,79 @@
+# Single-host production TOPOLOGY EXAMPLE, not a production security certification.
+# Requires external WSS reverse proxy, real account synchronization, backups,
+# monitoring, tested recovery, and environment-specific secrets.
+name: cdsi-native-production-example
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cdsi
+      POSTGRES_USER: cdsi
+      POSTGRES_PASSWORD: ${CDSI_POSTGRES_PASSWORD:?Missing PostgreSQL password}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./src/main/resources/db/postgres-token-rate-limit.sql:/docker-entrypoint-initdb.d/001-cdsi.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    networks: [internal]
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${CDSI_REDIS_PASSWORD:?Missing Redis password}
+    command:
+      - /bin/sh
+      - -ec
+      - 'exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"'
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=$$REDIS_PASSWORD redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    networks: [internal]
+
+  cdsi:
+    build:
+      context: .
+      dockerfile: Dockerfile.native
+    image: cdsi-native:production-candidate
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      MICRONAUT_ENVIRONMENTS: native
+      CDSI_ACCOUNT_POPULATOR: dynamodb
+      CDSI_TOKEN_LIMITER_BACKEND: postgres
+      AUTHENTICATION_SHARED_SECRET: ${CDSI_AUTH_SHARED_SECRET:?Missing Base64 external-service secret}
+      ACCOUNT_TABLE_REGION: ${CDSI_ACCOUNT_REGION:?Missing AWS region}
+      ACCOUNT_TABLE_TABLE_NAME: ${CDSI_ACCOUNT_TABLE:?Missing account table}
+      ACCOUNT_TABLE_STREAM_NAME: ${CDSI_ACCOUNT_STREAM:?Missing Kinesis stream}
+      POSTGRES_TOKEN_RATE_LIMIT_JDBC_URL: jdbc:postgresql://postgres:5432/cdsi
+      POSTGRES_TOKEN_RATE_LIMIT_USERNAME: cdsi
+      POSTGRES_TOKEN_RATE_LIMIT_PASSWORD: ${CDSI_POSTGRES_PASSWORD:?Missing PostgreSQL password}
+      REDIS_LEAKY_BUCKET_MODE: standalone
+      REDIS_LEAKY_BUCKET_HOST: redis
+      REDIS_LEAKY_BUCKET_PASSWORD: ${CDSI_REDIS_PASSWORD:?Missing Redis password}
+    # Only the local TLS/WSS reverse proxy may access the application.
+    # PostgreSQL and Redis have no published ports.
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8081:8081"
+    networks: [internal]
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  internal:
+    driver: bridge
