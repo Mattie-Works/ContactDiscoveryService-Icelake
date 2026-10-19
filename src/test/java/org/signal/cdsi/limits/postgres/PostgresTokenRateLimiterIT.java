@@ -30,6 +30,10 @@ import org.junit.jupiter.api.Test;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.signal.cdsi.limits.RateLimitExceededException;
 import org.signal.cdsi.limits.TokenRateLimitConfiguration;
+import org.signal.cdsi.enclave.DirectoryEntry;
+import org.signal.cdsi.nativecdsi.NativeDirectoryIndex;
+import org.signal.cdsi.nativecdsi.NativeLookupQuery;
+import org.signal.cdsi.nativecdsi.NativeLookupService;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -152,6 +156,29 @@ class PostgresTokenRateLimiterIT {
     CompletableFuture<Boolean> second = limiter.validate("alice", ByteBuffer.wrap(b))
         .handle((result, error) -> error == null);
     assertEquals(1, (first.join() ? 1 : 0) + (second.join() ? 1 : 0));
+  }
+
+  @Test
+  void nativeLookupEndToEndChargesPostgresAndProtectsAci() {
+    NativeDirectoryIndex directory = new NativeDirectoryIndex();
+    byte[] aci = token(11);
+    byte[] pni = token(12);
+    byte[] uak = new byte[16];
+    uak[0] = 7;
+    // Directory account identifiers are UUIDs (16 bytes).
+    directory.apply(java.util.List.of(new DirectoryEntry(18005550101L,
+        Arrays.copyOf(aci, 16), Arrays.copyOf(pni, 16), uak)), false);
+
+    PostgresTokenRateLimiter limiter = newLimiter(Clock.systemUTC(), 10);
+    NativeLookupService lookup = new NativeLookupService(directory, limiter, 10);
+    byte[] token = lookup.prepare("user1", 1).join();
+    var results = lookup.lookup("user1", token,
+        java.util.List.of(new NativeLookupQuery(18005550101L, uak))).join();
+    assertEquals(1, results.size());
+    assertEquals(11, results.get(0).aci()[0]);
+    assertEquals(12, results.get(0).pni()[0]);
+    assertThrows(IllegalArgumentException.class, () -> lookup.lookup("user1", token,
+        java.util.List.of(new NativeLookupQuery(18005550101L, uak))));
   }
 
   @Test
