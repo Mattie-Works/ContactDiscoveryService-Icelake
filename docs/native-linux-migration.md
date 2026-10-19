@@ -36,8 +36,9 @@ docker build -f Dockerfile.native -t cdsi-native .
 ```
 
 Use `MICRONAUT_ENVIRONMENTS=dev,native` only in a development deployment.
-Configure real account table/stream, external service authentication secret,
-Cosmos token limiter, and Redis connection limiter before any production use.
+Configure a real account table/stream, external service authentication secret,
+PostgreSQL token limiter, and Redis connection limiter before any production use.
+See [the PostgreSQL/Redis Docker Compose guide](self-hosted-rate-limiters.md).
 Terminate WSS at a trusted proxy; never expose backend HTTP to the Internet.
 
 See `docs/native-custom-client-protocol.md` for client frames and limitations.
