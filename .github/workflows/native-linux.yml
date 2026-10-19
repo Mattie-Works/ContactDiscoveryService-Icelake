@@ -26,7 +26,21 @@ jobs:
           java-version: '25'
           cache: maven
       - name: Compile and run native directory tests without Open Enclave
-        run: ./mvnw -B -Pnative-linux -Dtest='Native*Test' test
+        run: ./mvnw -B -e -Pnative-linux -Dtest='Native*Test' -DtrimStackTrace=false -Dsurefire.printSummary=true test
+      - name: Show individual failing test names and errors
+        if: failure()
+        run: |
+          echo '== Surefire report summaries =='
+          find target/surefire-reports -name '*.txt' -maxdepth 1 -print -exec sh -c 'grep -E "Tests run:|<<< FAILURE!|<<< ERROR!" "$1" || true' _ {} \;
+          echo '== Full test reports =='
+          find target/surefire-reports -maxdepth 1 -name '*.txt' -exec cat {} \;
+      - name: Save complete Maven Surefire test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-linux-surefire-reports
+          path: target/surefire-reports/
+          if-no-files-found: warn
 
   native-docker-build:
     runs-on: ubuntu-24.04
