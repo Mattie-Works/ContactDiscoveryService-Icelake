@@ -15,3 +15,8 @@ out/
 .vscode/
 c/proto/cdsi.c
 c/proto/cdsi.h
+
+# Local Docker Compose credentials and secrets
+.env
+.env.*
+!.env.example
