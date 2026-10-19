@@ -13,6 +13,7 @@ import java.util.concurrent.CompletableFuture;
 @Singleton
 @Requires(missingBeans = TokenRateLimiter.class)
 @Requires(env = "dev")
+@Requires(property = "cdsi.token-limiter.backend", value = "allow-all")
 public class AllowAllTokenRateLimiter implements TokenRateLimiter {
 
   @Override
