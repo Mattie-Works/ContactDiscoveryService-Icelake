@@ -106,6 +106,21 @@ class NativeLookupServiceTest {
   }
 
   @Test
+  void immutableQueryListsAreAcceptedAndNullEntriesAreRejected() {
+    TrackingLimiter limiter = new TrackingLimiter();
+    NativeLookupService service = createService(limiter);
+
+    byte[] token = service.prepare("user", 1).join();
+    assertEquals(1, service.lookup("user", token,
+        List.of(new NativeLookupQuery(E164, null))).join().size());
+
+    byte[] otherToken = service.prepare("user", 2).join();
+    assertThrows(IllegalArgumentException.class, () ->
+        service.lookup("user", otherToken,
+            java.util.Arrays.asList(new NativeLookupQuery(E164, null), null)));
+  }
+
+  @Test
   void directoryIsReadOnlyAfterLimiterAllowsRequest() {
     TrackingLimiter limiter = new TrackingLimiter() {
       @Override
