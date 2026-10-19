@@ -12,9 +12,11 @@ import com.azure.cosmos.CosmosClientBuilder;
 import com.azure.cosmos.models.CosmosClientTelemetryConfig;
 import com.azure.cosmos.models.CosmosMicrometerMetricsOptions;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Requires;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Singleton;
 
+@Requires(property = "cdsi.token-limiter.backend", value = "cosmos", defaultValue = "cosmos")
 @Factory
 public class CosmosClientFactory {
 
