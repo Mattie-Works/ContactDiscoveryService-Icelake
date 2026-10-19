@@ -6,7 +6,6 @@ package org.signal.cdsi.limits.postgres;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -85,7 +84,7 @@ class PostgresTokenRateLimiterIT {
     TokenRateLimitConfiguration limits = new TokenRateLimitConfiguration();
     limits.setBucketSize(capacity);
     limits.setLeakRateScalar(1);
-    limits.setLeakRateDuration(Duration.ofHours(1));
+    limits.setLeakRateDuration(Duration.ofMinutes(1));
     return new PostgresTokenRateLimiter(dataSource, clock, limits, IO, Duration.ofMinutes(5));
   }
 
@@ -167,7 +166,7 @@ class PostgresTokenRateLimiterIT {
     CompletionException blocked = assertThrows(CompletionException.class,
         () -> limiter.validate("alice", ByteBuffer.wrap(second)).join());
     assertInstanceOf(RateLimitExceededException.class, blocked.getCause());
-    clock.advance(Duration.ofHours(1));
+    clock.advance(Duration.ofMinutes(2));
     // The failed transaction did not consume the second token.
     assertEquals(2, limiter.validate("alice", ByteBuffer.wrap(second)).join().intValue());
   }
