@@ -1,5 +1,10 @@
-# Native Linux CDSI. Explicitly non-attested; use only with custom clients.
+# Native Linux CDSI: non-attested, custom clients only.
+# PostgreSQL enforces lookup/token quotas. Redis enforces connection limits.
+# Configure actual PostgreSQL credentials via environment variables or a
+# protected external Micronaut config file. Never commit passwords here.
 cdsi:
   backend: native
+  token-limiter:
+    backend: postgres
   native:
     max-numbers: 1024
