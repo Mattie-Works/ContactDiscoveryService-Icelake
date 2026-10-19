@@ -9,6 +9,7 @@ on:
       - 'src/**'
       - 'pom.xml'
       - 'Dockerfile.native'
+      - 'compose.native.*.yml'
       - '.github/workflows/native-linux.yml'
 
 permissions:
@@ -29,8 +30,8 @@ jobs:
         run: ./mvnw -B -e -Pnative-linux -Dtest='Native*Test' -DtrimStackTrace=false -Dsurefire.printSummary=true test
       - name: Check Docker availability for PostgreSQL integration tests
         run: docker info >/dev/null
-      - name: Run PostgreSQL transactional quota integration tests
-        run: ./mvnw -B -e -Pnative-linux -Dtest=PostgresTokenRateLimiterIT -DtrimStackTrace=false test
+      - name: Run PostgreSQL and standalone Redis integration tests
+        run: ./mvnw -B -e -Pnative-linux -Dtest='PostgresTokenRateLimiterIT,StandaloneRedisLeakyBucketRateLimiterIT' -DtrimStackTrace=false test
       - name: Show individual failing test names and errors
         if: failure()
         run: |
