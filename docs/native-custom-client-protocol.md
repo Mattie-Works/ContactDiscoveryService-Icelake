@@ -46,7 +46,7 @@
 - Max WebSocket payload: 1 MiB; default maximum `count` is 1024 (configure `cdsi.native.max-numbers`).
 - Tokens expire after two minutes and are single-use, user-bound, and count-bound.
 - New tokens are prepared using `TokenRateLimiter.prepare`; spending is validated using `TokenRateLimiter.validate`.
-- The production token limiter still needs a configured CosmosDB token bucket; the separate `DevNativeTokenRateLimiter` is only enabled in the development environment.
+- Native mode now selects PostgreSQL token buckets by default. Configure the `postgres-token-rate-limit.*` JDBC settings and initialize the SQL schema before startup. The optional `DevNativeTokenRateLimiter` must be explicitly selected with `cdsi.token-limiter.backend=dev` and must never be used in production. See [self-hosted rate limiters](self-hosted-rate-limiters.md).
 - A request rejected by the limiter returns a rate-limit WebSocket close; invalid inputs return close code 4003.
 - Never log bearer tokens, UAKs, raw E.164 numbers, or response identifiers.
 
