@@ -27,6 +27,7 @@ import java.time.Duration;
 import java.util.List;
 
 @Requires(property = LeakyBucketRedisClientFactory.HOST)
+@Requires(property = "redis-leaky-bucket.mode", value = "cluster", defaultValue = "cluster")
 @Factory
 class LeakyBucketRedisClientFactory {
 
